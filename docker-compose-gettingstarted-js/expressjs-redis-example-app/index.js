@@ -10,6 +10,11 @@ var processRequest = function(request, response) {
 
   var countKey = "count";
 
+  var readError;
+  var readReply;
+  var writeError;
+  var writeReply;
+
   var connected = false;
   var updated = false;
   var readIssue = "Unknown Issue";
@@ -21,6 +26,10 @@ var processRequest = function(request, response) {
     readIssue = "Server unreachable";
 
     response.render("home", {
+      readError: readError,
+      readReply: readReply,
+      writeError: writeError,
+      writeReply: writeError,
       connected: connected,
       updated: updated,
       readIssue: readIssue,
@@ -30,30 +39,34 @@ var processRequest = function(request, response) {
   });
 
   client.on("connect", function() {
-    connected = true;
-
     client.get(countKey, function(err, reply) {
-      console.log(err);
-      console.log(reply);
+      readError = err;
+      readReply = reply;
 
-      //   readIssue = err;
-      //   if (!readIssue) {
-      //     connected = true;
+      readIssue = err;
+      if (!readIssue) {
+        connected = true;
 
-      //     if (reply) {
-      //       count = parseInt(reply)++;
-      //     }
+        if (reply) {
+          count = parseInt(reply);
+        }
 
-      //     client.set(countKey, count.toString(), function(err2, reply2) {
-      //       console.log(err2);
-      //       console.log(reply2);
+        count++;
 
-      //       writeIssue = err2;
-      //       updated = !writeIssue;
-      //     });
-      //   }
+        client.set(countKey, count.toString(), function(err2, reply2) {
+          writeError = err2;
+          writeReply = reply2;
+
+          writeIssue = err2;
+          updated = !writeIssue;
+        });
+      }
 
       response.render("home", {
+        readError: readError,
+        readReply: readReply,
+        writeError: writeError,
+        writeReply: writeError,
         connected: connected,
         updated: updated,
         readIssue: readIssue,

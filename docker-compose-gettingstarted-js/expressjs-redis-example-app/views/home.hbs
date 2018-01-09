@@ -1,7 +1,31 @@
 <h1>Hello World !</h1>
 
+<table>
+    <thead>
+        <tr>
+            <th>Key</th><td>Value</td>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><th>Read Error</th><td>{{readError}}</td></tr>
+        <tr><th>Read Reply</th><td>{{readReply}}</td></tr>
+        <tr><th>Write Error</th><td>{{writeError}}</td></tr>
+        <tr><th>Write Reply</th><td>{{writeError}}</td></tr>
+        <tr><th>Connected</th><td>{{connected}}</td></tr>
+        <tr><th>Updated</th><td>{{updated}}</td></tr>
+        <tr><th>Read Issue</th><td>{{readIssue}}</td></tr>
+        <tr><th>Write Issue</th><td>{{writeIssue}}</td></tr>
+        <tr><th>Count</th><td>{{count}}</td></tr>
+    </tbody>
+</table>
+
 {{#if connected}}
 <p>I have been seen {{count}} times.</p>
+{{#if updated}}
+<p>Redis updated.</p>
+{{else}}
+<p>Failed to update Redis ({{writeIssue}})...</p>
+{{/if}}
 {{else}}
 <p>Failed to connect to Redis ({{readIssue}})...</p>
 {{/if}}
