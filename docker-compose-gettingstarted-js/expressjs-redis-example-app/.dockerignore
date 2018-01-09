@@ -1,0 +1,7 @@
+#   Git
+**/.git
+**/.gitignore
+**/README.md
+
+#   Depencencies
+**/node_modules

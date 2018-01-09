@@ -1,0 +1,10 @@
+version: '3'
+services:
+  redis:
+    image: "redis:latest"
+  expressjs-redis-example-app:    
+    image: "expressjs-redis-example-app:latest"
+    depends_on:
+        - redis
+    ports:
+     - "3000:80"
