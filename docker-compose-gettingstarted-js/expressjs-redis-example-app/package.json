@@ -4,12 +4,16 @@
   "description": "Docker Compose tutorial with ExpressJs and Redis (https://docs.docker.com/compose/gettingstarted/, https://www.sitepoint.com/using-redis-node-js/ and https://coligo.io/nodejs-api-redis-cache/)",
   "author": "Ewan \"ScottChak\" BURNS",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
   "dependencies": {
     "express": "^4.16.2",
     "express-handlebars": "^3.0.0",
     "redis": "^2.8.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.14.10"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "set PORT=3001 && nodemon --inspect"
   }
 }

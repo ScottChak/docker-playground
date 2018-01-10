@@ -1,79 +1,95 @@
+//  Load dependencies
 var path = require("path");
 var express = require("express");
 var exphbs = require("express-handlebars");
 
-//  Process request
-var processRequest = function(request, response) {
+//  Set global variables
+var countKey = "count";
+
+var GetRedisClient = function(onErrorCallback) {
+  //  Load dependencies
   var redis = require("redis");
 
-  console.log("Starting");
+  var port = process.env.REDIS_PORT || 6379;
+  var host = process.env.REDIS_HOST || "localhost";
 
-  var countKey = "count";
+  console.log("Attempting to connect to Redis");
+  console.log("Redis connection configure to " + host + ":" + port);
 
-  var readError;
-  var readReply;
-  var writeError;
-  var writeReply;
+  //  Create and configure client
+  var client = redis.createClient(port, host);
 
-  var connected = false;
-  var updated = false;
-  var readIssue = "Unknown Issue";
-  var writeIssue = "Unknown Issue";
-  var count = 0;
+  client.on("connected", function() {
+    console.log("Connected to Redis");
+  });
 
-  var client = redis.createClient(6379, "redis");
-  client.on("error", function() {
-    readIssue = "Server unreachable";
+  client.on("ready", function() {
+    console.log("Client is ready to Redis");
+  });
 
+  client.on("end", function() {
+    console.log("Client has been closed");
+  });
+
+  client.on("error", onErrorCallback);
+
+  return client;
+};
+
+//  Process request
+var processRequest = function(request, response) {
+  console.log("----------");
+  console.log("Processing request");
+
+  var client = GetRedisClient(function(err) {
+    //  Close client
+    client.quit();
+
+    //  Send response
     response.render("home", {
-      readError: readError,
-      readReply: readReply,
-      writeError: writeError,
-      writeReply: writeError,
-      connected: connected,
-      updated: updated,
-      readIssue: readIssue,
-      writeIssue: writeIssue,
-      count: count
+      readError: "",
+      readReply: "",
+      writeError: "",
+      writeReply: "",
+      connectionError: err,
+      connected: false,
+      updated: false,
+      count: 0
     });
   });
 
-  client.on("connect", function() {
-    client.get(countKey, function(err, reply) {
-      readError = err;
-      readReply = reply;
+  client.get(countKey, function(err, reply) {
+    readError = err;
+    readReply = reply;
 
-      readIssue = err;
-      if (!readIssue) {
-        connected = true;
-
-        if (reply) {
-          count = parseInt(reply);
-        }
-
-        count++;
-
-        client.set(countKey, count.toString(), function(err2, reply2) {
-          writeError = err2;
-          writeReply = reply2;
-
-          writeIssue = err2;
-          updated = !writeIssue;
-        });
+    if (!readError) {
+      var count = 0;
+      if (reply) {
+        count = parseInt(reply);
       }
 
-      response.render("home", {
-        readError: readError,
-        readReply: readReply,
-        writeError: writeError,
-        writeReply: writeError,
-        connected: connected,
-        updated: updated,
-        readIssue: readIssue,
-        writeIssue: writeIssue,
-        count: count
+      count++;
+
+      client.set(countKey, count.toString(), function(err2, reply2) {
+        writeError = err2;
+        writeReply = reply2;
+
+        //  Close client
+        client.quit();
+
+        //  Send response
+        response.render("home", {
+          readError: err,
+          readReply: reply,
+          writeError: err2,
+          writeReply: reply2,
+          connectionError: "",
+          connected: true,
+          updated: true,
+          count: count
+        });
       });
-    });
+    }
   });
 };
 

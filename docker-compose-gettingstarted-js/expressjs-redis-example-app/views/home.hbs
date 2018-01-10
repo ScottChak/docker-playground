@@ -11,10 +11,9 @@
         <tr><th>Read Reply</th><td>{{readReply}}</td></tr>
         <tr><th>Write Error</th><td>{{writeError}}</td></tr>
         <tr><th>Write Reply</th><td>{{writeError}}</td></tr>
+        <tr><th>Connection Error</th><td>{{connectionError}}</td></tr>
         <tr><th>Connected</th><td>{{connected}}</td></tr>
         <tr><th>Updated</th><td>{{updated}}</td></tr>
-        <tr><th>Read Issue</th><td>{{readIssue}}</td></tr>
-        <tr><th>Write Issue</th><td>{{writeIssue}}</td></tr>
         <tr><th>Count</th><td>{{count}}</td></tr>
     </tbody>
 </table>
@@ -24,8 +23,8 @@
 {{#if updated}}
 <p>Redis updated.</p>
 {{else}}
-<p>Failed to update Redis ({{writeIssue}})...</p>
+<p>Failed to update Redis ({{writeError}})...</p>
 {{/if}}
 {{else}}
-<p>Failed to connect to Redis ({{readIssue}})...</p>
+<p>Failed to connect to Redis ({{readError}})...</p>
 {{/if}}
