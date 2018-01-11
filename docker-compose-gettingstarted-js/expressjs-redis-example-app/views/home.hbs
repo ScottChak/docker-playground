@@ -1,30 +1,39 @@
-<h1>Hello World !</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12">
+            <h1>Hello World !</h1>
+        </div>
+    </div>
+</div>
 
-<table>
-    <thead>
-        <tr>
-            <th>Key</th><td>Value</td>
-        </tr>
-    </thead>
-    <tbody>
-        <tr><th>Read Error</th><td>{{readError}}</td></tr>
-        <tr><th>Read Reply</th><td>{{readReply}}</td></tr>
-        <tr><th>Write Error</th><td>{{writeError}}</td></tr>
-        <tr><th>Write Reply</th><td>{{writeError}}</td></tr>
-        <tr><th>Connection Error</th><td>{{connectionError}}</td></tr>
-        <tr><th>Connected</th><td>{{connected}}</td></tr>
-        <tr><th>Updated</th><td>{{updated}}</td></tr>
-        <tr><th>Count</th><td>{{count}}</td></tr>
-    </tbody>
-</table>
-
-{{#if connected}}
-<p>I have been seen {{count}} times.</p>
-{{#if updated}}
-<p>Redis updated.</p>
-{{else}}
-<p>Failed to update Redis ({{writeError}})...</p>
-{{/if}}
-{{else}}
-<p>Failed to connect to Redis ({{readError}})...</p>
-{{/if}}
+<div class="container">
+    <div class="row">
+        <div class="col-xs-12 col-sm-6">
+            {{#if ok}}
+            <p>I have been seen {{count}} time(s).</p>
+            {{else}}
+            <p>Failed to read from redis, please check logs...</p>
+            {{/if}}
+        </div>
+        <div class="col-xs-12 col-sm-6">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>&nbsp;</th>
+                        <th>View Content</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Logs</th>
+                        <td>{{#each logs}}<span>{{this}}</span><br/>{{/each}}</td>
+                    </tr>
+                    <tr>
+                        <th>Count</th>
+                        <td>{{count}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

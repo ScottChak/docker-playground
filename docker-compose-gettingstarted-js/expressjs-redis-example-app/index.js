@@ -6,29 +6,39 @@ var exphbs = require("express-handlebars");
 //  Set global variables
 var countKey = "count";
 
-var GetRedisClient = function(onErrorCallback) {
+var Log = function(message, logs) {
+  console.log(message);
+
+  if (typeof logs === "undefined") {
+    logs = [];
+  }
+
+  logs.push(message);
+};
+
+var getRedisClient = function(logs, onErrorCallback) {
   //  Load dependencies
   var redis = require("redis");
 
   var port = process.env.REDIS_PORT || 6379;
   var host = process.env.REDIS_HOST || "localhost";
 
-  console.log("Attempting to connect to Redis");
-  console.log("Redis connection configure to " + host + ":" + port);
+  Log("Attempting to connect to Redis", logs);
+  Log("Redis connection configure to " + host + ":" + port, logs);
 
   //  Create and configure client
   var client = redis.createClient(port, host);
 
   client.on("connected", function() {
-    console.log("Connected to Redis");
+    Log("Connected to Redis", logs);
   });
 
   client.on("ready", function() {
-    console.log("Client is ready to Redis");
+    Log("Client is ready", logs);
   });
 
   client.on("end", function() {
-    console.log("Client has been closed");
+    Log("Client has been closed", logs);
   });
 
   client.on("error", onErrorCallback);
@@ -36,33 +46,78 @@ var GetRedisClient = function(onErrorCallback) {
   return client;
 };
 
-//  Process request
-var processRequest = function(request, response) {
-  console.log("----------");
-  console.log("Processing request");
+var createResponse = function(
+  response,
+  logs,
+  ok,
+  count,
+  responseHasBeenSet,
+  cleanUpResources
+) {
+  Log("Response has been set: " + responseHasBeenSet, logs);
+  var created = false;
 
-  var client = GetRedisClient(function(err) {
-    //  Close client
-    client.quit();
+  if (!responseHasBeenSet) {
+    Log("Cleaning up resources", logs);
+
+    cleanUpResources();
 
     //  Send response
+    Log("Creating response", logs);
     response.render("home", {
-      readError: "",
-      readReply: "",
-      writeError: "",
-      writeReply: "",
-      connectionError: err,
-      connected: false,
-      updated: false,
-      count: 0
+      logs: logs,
+      ok: ok,
+      count: count
     });
+
+    created = true;
+  }
+
+  return responseHasBeenSet || created;
+};
+
+//  Process request
+var processRequest = function(request, response) {
+  var responseHasBeenSet = false;
+  var logs = [];
+
+  Log("----------", logs);
+  Log("Processing request", logs);
+
+  var client = getRedisClient(logs, function(err) {
+    Log(err, logs);
+
+    responseHasBeenSet = createResponse(
+      response,
+      logs,
+      false,
+      -1,
+      responseHasBeenSet,
+      function() {
+        //  Close client
+        client.quit();
+      }
+    );
   });
 
   client.get(countKey, function(err, reply) {
-    readError = err;
-    readReply = reply;
+    if (err) {
+      Log("Read Error: " + err, logs);
 
-    if (!readError) {
+      responseHasBeenSet = createResponse(
+        response,
+        logs,
+        false,
+        -1,
+        responseHasBeenSet,
+        function() {
+          //  Close client
+          client.quit();
+        }
+      );
+    } else {
+      Log("Read Reply: " + reply, logs);
+
       var count = 0;
       if (reply) {
         count = parseInt(reply);
@@ -71,23 +126,17 @@ var processRequest = function(request, response) {
       count++;
 
       client.set(countKey, count.toString(), function(err2, reply2) {
-        writeError = err2;
-        writeReply = reply2;
-
-        //  Close client
-        client.quit();
-
-        //  Send response
-        response.render("home", {
-          readError: err,
-          readReply: reply,
-          writeError: err2,
-          writeReply: reply2,
-          connectionError: "",
-          connected: true,
-          updated: true,
-          count: count
-        });
+        responseHasBeenSet = createResponse(
+          response,
+          logs,
+          true,
+          count,
+          responseHasBeenSet,
+          function() {
+            //  Close client
+            client.quit();
+          }
+        );
       });
     }
   });
@@ -114,7 +163,7 @@ app.get("/", processRequest);
 
 //  Error handling
 app.use((err, request, response, next) => {
-  console.log(err);
+  Log(err, []);
   response.status(500).send("Something broke!");
 });
 
